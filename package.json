@@ -1,0 +1,45 @@
+{
+  "name": "lofetch",
+  "version": "2.0.0",
+  "description": "Cross-platform system information display tool (neofetch-like) — a single self-contained bash script with zero dependencies",
+  "keywords": [
+    "neofetch",
+    "system-info",
+    "cli",
+    "terminal",
+    "bash",
+    "lolcat",
+    "fetch"
+  ],
+  "homepage": "https://github.com/jwuxan/lofetch",
+  "bugs": {
+    "url": "https://github.com/jwuxan/lofetch/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jwuxan/lofetch.git"
+  },
+  "license": "MIT",
+  "author": "lofetch contributors",
+  "bin": {
+    "lofetch": "./lofetch"
+  },
+  "files": [
+    "lofetch",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "test": "bash test_lofetch.sh",
+    "lint": "shellcheck lofetch || true"
+  },
+  "engines": {
+    "node": ">=10.0.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ]
+}

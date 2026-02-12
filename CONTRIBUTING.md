@@ -16,7 +16,7 @@ We're committed to maintaining a welcoming and inclusive community. All contribu
 Clone the repository and verify your development environment:
 
 ```bash
-git clone https://github.com/YOUR_USER/lofetch.git
+git clone https://github.com/jwuxan/lofetch.git
 cd lofetch
 ./lofetch                    # Run the tool
 bash test_lofetch.sh         # Run tests (110 assertions, exit 0 = pass)

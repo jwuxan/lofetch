@@ -1,0 +1,35 @@
+# Development and test files
+test_*.sh
+*.test.js
+.git
+.github
+
+# CI/CD
+.travis.yml
+.gitlab-ci.yml
+
+# Homebrew
+Formula/
+
+# Documentation (README.md is included via package.json "files")
+docs/
+CONTRIBUTING.md
+CLAUDE.md
+
+# Build artifacts
+*.log
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Makefile (not needed for npm users)
+Makefile
+
+# Legacy files
+report.sh
+test_report.sh

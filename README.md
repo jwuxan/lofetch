@@ -2,7 +2,7 @@
 
 > A retro CRT-style system information display. One script. Zero dependencies. Every platform.
 
-[![CI](https://github.com/YOUR_USER/lofetch/workflows/CI/badge.svg)](https://github.com/YOUR_USER/lofetch/actions)
+[![CI](https://github.com/jwuxan/lofetch/workflows/CI/badge.svg)](https://github.com/jwuxan/lofetch/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Bash](https://img.shields.io/badge/bash-%3E%3D4.0-green.svg)](https://www.gnu.org/software/bash/)
 
@@ -40,10 +40,27 @@
 
 ## Quick Start
 
+### Install via npm
+
+```bash
+# Global install
+npm install -g lofetch
+
+# Or run without installing
+npx lofetch
+```
+
+### Install via Homebrew
+
+```bash
+brew tap jwuxan/lofetch https://github.com/jwuxan/lofetch
+brew install lofetch
+```
+
 ### Install via Git
 
 ```bash
-git clone https://github.com/YOUR_USER/lofetch.git
+git clone https://github.com/jwuxan/lofetch.git
 cd lofetch
 make install
 ```
@@ -51,12 +68,10 @@ make install
 ### One-liner install
 
 ```bash
-curl -sL https://raw.githubusercontent.com/YOUR_USER/lofetch/main/lofetch -o ~/.local/bin/lofetch && chmod +x ~/.local/bin/lofetch
+curl -sL https://raw.githubusercontent.com/jwuxan/lofetch/main/lofetch -o ~/.local/bin/lofetch && chmod +x ~/.local/bin/lofetch
 ```
 
-### Manual copy
-
-Download `lofetch` and place it anywhere on your `$PATH`.
+See [INSTALL.md](INSTALL.md) for detailed installation instructions and troubleshooting.
 
 ## Usage
 
