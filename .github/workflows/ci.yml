@@ -5,19 +5,183 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    # Weekly: every Monday at 00:00 UTC
+    - cron: "0 0 * * 1"
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
 
 jobs:
+  # ── Lint ──────────────────────────────────────────────────
+  lint:
+    name: ShellCheck Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: Run ShellCheck (strict)
+        run: shellcheck --severity=warning --format=gcc lofetch test_lofetch.sh test_package.sh install.sh
+
+      - name: Run ShellCheck (SARIF)
+        if: always()
+        run: |
+          shellcheck --severity=warning --format=json lofetch test_lofetch.sh test_package.sh install.sh \
+            | python3 -c "
+          import json, sys
+          issues = json.load(sys.stdin)
+          sarif = {
+            '\$schema': 'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json',
+            'version': '2.1.0',
+            'runs': [{
+              'tool': {'driver': {'name': 'ShellCheck', 'rules': []}},
+              'results': []
+            }]
+          }
+          seen_rules = set()
+          for i in issues:
+            rule_id = 'SC' + str(i['code'])
+            if rule_id not in seen_rules:
+              seen_rules.add(rule_id)
+              sarif['runs'][0]['tool']['driver']['rules'].append({
+                'id': rule_id,
+                'shortDescription': {'text': i.get('message', '')},
+              })
+            level_map = {'error': 'error', 'warning': 'warning', 'info': 'note', 'style': 'note'}
+            sarif['runs'][0]['results'].append({
+              'ruleId': rule_id,
+              'level': level_map.get(i.get('level', 'warning'), 'warning'),
+              'message': {'text': i.get('message', '')},
+              'locations': [{
+                'physicalLocation': {
+                  'artifactLocation': {'uri': i.get('file', '')},
+                  'region': {'startLine': i.get('line', 1), 'startColumn': i.get('column', 1)}
+                }
+              }]
+            })
+          json.dump(sarif, sys.stdout, indent=2)
+          " > shellcheck-results.sarif || true
+
+      - name: Upload SARIF results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: shellcheck-results.sarif
+        continue-on-error: true
+
+  # ── Test (Ubuntu + macOS) ─────────────────────────────────
   test:
+    name: Test (${{ matrix.os }})
+    needs: lint
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - name: Run tests
-        run: bash test_lofetch.sh
-      - name: Lint with ShellCheck
-        uses: ludeeus/action-shellcheck@master
+
+      - name: Run main test suite
+        run: bash test_lofetch.sh 2>&1 | tee test-output.log
+
+      - name: Run package structure tests
+        run: bash test_package.sh 2>&1 | tee -a test-output.log
+
+      - name: Run lofetch smoke test
+        run: |
+          ./lofetch --version
+          ./lofetch --json | python3 -m json.tool > /dev/null
+          ./lofetch --no-color --compact > /dev/null
+          ./lofetch --list-themes
+          ./lofetch --list-modules
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          scandir: .
-          additional_files: lofetch
+          name: test-logs-${{ matrix.os }}
+          path: test-output.log
+          retention-days: 14
+
+  # ── Bash Compatibility ────────────────────────────────────
+  bash-compat:
+    name: Bash ${{ matrix.bash-version }}
+    needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        bash-version: ["4.4", "5.0", "5.2"]
+    container:
+      image: bash:${{ matrix.bash-version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install test dependencies
+        run: |
+          # bash containers are Alpine-based
+          apk add --no-cache coreutils procps grep sed gawk
+
+      - name: Run test suite
+        run: bash test_lofetch.sh
+
+      - name: Smoke test
+        run: |
+          bash lofetch --version
+          bash lofetch --no-color --compact
+
+  # ── Version Consistency ───────────────────────────────────
+  version-check:
+    name: Version Consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check version parity across files
+        run: |
+          set -euo pipefail
+
+          script_ver=$(grep -oP 'LOFETCH_VERSION="\K[^"]+' lofetch)
+          pkg_ver=$(python3 -c "import json; print(json.load(open('package.json'))['version'])")
+          formula_ver=$(grep -oP 'v\K[0-9]+\.[0-9]+\.[0-9]+' Formula/lofetch.rb | head -1)
+
+          echo "lofetch script:  $script_ver"
+          echo "package.json:    $pkg_ver"
+          echo "Formula/lofetch: $formula_ver"
+
+          errors=0
+          if [[ "$script_ver" != "$pkg_ver" ]]; then
+            echo "::error::Version mismatch: lofetch ($script_ver) != package.json ($pkg_ver)"
+            errors=1
+          fi
+          if [[ "$script_ver" != "$formula_ver" ]]; then
+            echo "::error::Version mismatch: lofetch ($script_ver) != Formula ($formula_ver)"
+            errors=1
+          fi
+          if [[ "$errors" -eq 0 ]]; then
+            echo "All versions match: $script_ver"
+          else
+            exit 1
+          fi
+
+  # ── Security Scan ─────────────────────────────────────────
+  security:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

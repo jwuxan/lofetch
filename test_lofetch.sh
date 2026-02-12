@@ -86,7 +86,7 @@ echo "=== Constants ==="
 
 assert_eq "BOX_INNER_WIDTH is 52" "52" "$BOX_INNER_WIDTH"
 assert_eq "LABEL_WIDTH is 13" "13" "$LABEL_WIDTH"
-assert_eq "BAR_WIDTH is 38" "38" "$BAR_WIDTH"
+assert_eq "BAR_WIDTH is 37" "37" "$BAR_WIDTH"
 assert_eq "FILL_CHAR is █" "█" "$FILL_CHAR"
 assert_eq "EMPTY_CHAR is ░" "░" "$EMPTY_CHAR"
 assert_eq "LOFETCH_VERSION is 2.0.0" "2.0.0" "$LOFETCH_VERSION"

@@ -1,0 +1,110 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  # ── Validate before releasing ─────────────────────────────
+  test:
+    name: Pre-release Tests
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run test suite
+        run: bash test_lofetch.sh
+
+      - name: Run package tests
+        run: bash test_package.sh
+
+      - name: Shellcheck
+        run: |
+          if command -v shellcheck &>/dev/null; then
+            shellcheck --severity=warning lofetch
+          else
+            echo "ShellCheck not available on this runner, skipping"
+          fi
+
+      - name: Verify tag matches script version
+        run: |
+          tag_ver="${GITHUB_REF_NAME#v}"
+          script_ver=$(grep -oE 'LOFETCH_VERSION="[^"]+"' lofetch | sed 's/LOFETCH_VERSION="//;s/"//')
+          if [[ "$tag_ver" != "$script_ver" ]]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match LOFETCH_VERSION=$script_ver"
+            exit 1
+          fi
+          echo "Tag matches version: $tag_ver"
+
+  # ── Publish to npm with provenance ────────────────────────
+  publish-npm:
+    name: Publish to npm
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Publish with provenance
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # ── Create GitHub Release ─────────────────────────────────
+  github-release:
+    name: GitHub Release
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get the previous tag
+          prev_tag=$(git tag --sort=-v:refname | head -2 | tail -1)
+          if [[ -z "$prev_tag" || "$prev_tag" == "$GITHUB_REF_NAME" ]]; then
+            # First release — use all commits
+            changelog=$(git log --pretty=format:"- %s (%h)" HEAD)
+          else
+            changelog=$(git log --pretty=format:"- %s (%h)" "${prev_tag}..HEAD")
+          fi
+          # Write to file for the release body
+          {
+            echo "## What's Changed"
+            echo ""
+            echo "$changelog"
+            echo ""
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${prev_tag}...${GITHUB_REF_NAME}"
+          } > release-notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: release-notes.md
+          generate_release_notes: false
+          files: |
+            lofetch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

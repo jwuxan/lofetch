@@ -1,0 +1,42 @@
+name: PR Title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  validate:
+    name: Conventional Commit Title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title format
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+
+          # Conventional commit prefixes
+          # feat, fix, docs, chore, refactor, test, ci, style, perf, build, revert
+          pattern='^(feat|fix|docs|chore|refactor|test|ci|style|perf|build|revert)(\(.+\))?!?: .+'
+
+          if [[ "$PR_TITLE" =~ $pattern ]]; then
+            echo "PR title is valid: $PR_TITLE"
+          else
+            echo "::error::PR title does not follow conventional commit format."
+            echo ""
+            echo "Expected format: <type>(<optional scope>): <description>"
+            echo ""
+            echo "Valid types: feat, fix, docs, chore, refactor, test, ci, style, perf, build, revert"
+            echo ""
+            echo "Examples:"
+            echo "  feat: add dark mode theme"
+            echo "  fix(render): correct bar width on macOS"
+            echo "  docs: update CONTRIBUTING.md"
+            echo "  chore(ci): upgrade actions/checkout to v4"
+            echo ""
+            echo "Your title: $PR_TITLE"
+            exit 1
+          fi
