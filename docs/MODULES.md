@@ -4,14 +4,14 @@
 
 | Module | Displays |
 |--------|----------|
-| `os` | Operating system name, kernel version |
-| `net` | Hostname, machine IP, client IP, DNS IP, user |
-| `cpu` | Processor model, cores/sockets, hypervisor, frequency, load averages (1/5/15m bars) |
-| `mem` | Memory usage (used/total GiB), percentage, progress bar |
-| `disk` | Disk usage (used/total GB), percentage, progress bar, ZFS health |
-| `session` | Last login (with IP if SSH), uptime |
+| `os` | Distro name, kernel release |
+| `cpu` | CPU model, topology (cores/sockets), virtualization, clock speed, load averages (1/5/15m bars) |
+| `mem` | RAM utilization (used/total GiB), percentage, progress bar |
+| `disk` | Disk capacity (used/total GB), percentage, progress bar, ZFS status |
+| `net` | Host, local IP, remote IP, resolver, username |
+| `session` | Last session (with IP if SSH), running time |
 
-Default: all six modules in order `os,net,cpu,mem,disk,session`.
+Default: all six modules in order `os,cpu,mem,disk,net,session`.
 
 ## Usage
 

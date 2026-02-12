@@ -24,7 +24,7 @@ The test suite has no per-test granularity — it runs all assertions in one pas
 
 `lofetch` is a single ~936-line bash script organized in sequential sections. The execution flow is:
 
-**Entry point** (line 924): `parse_args` → `load_config` → `detect_color_support` → `apply_theme` → `render_report` (or `render_json`). Setting `LOFETCH_SOURCED=1` prevents execution, exporting all functions for testing.
+**Entry point**: `parse_args` → `load_config` → `detect_color_support` → `apply_theme` → `render_report` (or `render_json`). Setting `LOFETCH_SOURCED=1` prevents execution, exporting all functions for testing.
 
 **Key architectural layers:**
 

@@ -9,14 +9,14 @@ export LC_NUMERIC
 
 # ── Constants ────────────────────────────────────────────
 
-LOFETCH_VERSION="1.1.0"
+LOFETCH_VERSION="2.0.0"
 BOX_INNER_WIDTH=52
 LABEL_WIDTH=13
-BAR_WIDTH=22
+BAR_WIDTH=38
 FILL_CHAR="█"
 EMPTY_CHAR="░"
 SHADE_CHARS=("█" "▓" "▒" "░")
-DEFAULT_MODULES="os,net,cpu,mem,disk,session"
+DEFAULT_MODULES="os,cpu,mem,disk,net,session"
 COMPACT_MODE=0
 JSON_MODE=0
 
@@ -351,7 +351,7 @@ get_cpu_info() {
             cores="$(nproc 2>/dev/null || grep -c '^processor' /proc/cpuinfo 2>/dev/null || echo "1")"
             sockets="$(grep 'physical id' /proc/cpuinfo 2>/dev/null | sort -u | wc -l | tr -d ' ')"
             [[ "$sockets" -lt 1 ]] 2>/dev/null && sockets=1
-            CPU_CORES="$cores vCPU(s) / $sockets Socket(s)"
+            CPU_CORES="${cores}c / ${sockets}s"
             CPU_NPROC="$cores"
 
             # Hypervisor
@@ -359,7 +359,7 @@ get_cpu_info() {
                 local virt
                 virt="$(systemd-detect-virt 2>/dev/null || echo "none")"
                 if [[ "$virt" == "none" ]]; then
-                    CPU_HYPERVISOR="Bare Metal"
+                    CPU_HYPERVISOR="Physical"
                 else
                     CPU_HYPERVISOR="$virt"
                 fi
@@ -383,15 +383,15 @@ get_cpu_info() {
             local cores packages
             cores="$(sysctl -n hw.ncpu 2>/dev/null || echo "1")"
             packages="$(sysctl -n hw.packages 2>/dev/null || echo "1")"
-            CPU_CORES="$cores vCPU(s) / $packages Socket(s)"
+            CPU_CORES="${cores}c / ${packages}s"
             CPU_NPROC="$cores"
 
             local hv
             hv="$(sysctl -n kern.hv_vmm_present 2>/dev/null || echo "0")"
             if [[ "$hv" == "1" ]]; then
-                CPU_HYPERVISOR="Virtual Machine"
+                CPU_HYPERVISOR="VM"
             else
-                CPU_HYPERVISOR="Bare Metal"
+                CPU_HYPERVISOR="Physical"
             fi
 
             local freq_hz
@@ -411,7 +411,7 @@ get_cpu_info() {
             ;;
         windows_mingw)
             CPU_MODEL="${PROCESSOR_IDENTIFIER:-N/A}"
-            CPU_CORES="${NUMBER_OF_PROCESSORS:-1} vCPU(s) / 1 Socket(s)"
+            CPU_CORES="${NUMBER_OF_PROCESSORS:-1}c / 1s"
             CPU_NPROC="${NUMBER_OF_PROCESSORS:-1}"
             CPU_HYPERVISOR="N/A"
             CPU_FREQ="N/A"
@@ -530,7 +530,7 @@ get_disk_info() {
         local zfs_status
         zfs_status="$(zpool status -x 2>/dev/null || echo "")"
         if [[ "$zfs_status" == *"all pools are healthy"* ]]; then
-            ZFS_HEALTH="HEALTH O.K."
+            ZFS_HEALTH="Healthy"
         elif [[ -n "$zfs_status" ]]; then
             ZFS_HEALTH="DEGRADED"
         else
@@ -633,12 +633,12 @@ print_ascii_logo() {
 
 print_header() {
     if [[ "$COMPACT_MODE" -eq 1 ]]; then
-        print_centered "LOFETCH REPORT" "$C_HEADER"
+        print_centered "LOFETCH" "$C_HEADER"
     else
         print_empty_row
         print_ascii_logo
         print_empty_row
-        print_centered "MACHINE REPORT" "$C_SUBTITLE"
+        print_centered "SYSTEM OVERVIEW" "$C_SUBTITLE"
         local platform
         platform="$(detect_platform)"
         local ts
@@ -688,7 +688,7 @@ Options:
   -h, --help          Show this help message
   -v, --version       Show version
   -t, --theme NAME    Set color theme (crt, neon, minimal, plain)
-  -m, --modules LIST  Comma-separated modules (os,net,cpu,mem,disk,session)
+  -m, --modules LIST  Comma-separated modules (os,cpu,mem,disk,net,session)
   -j, --json          Output as JSON
   -c, --compact       Compact output (no ASCII art)
       --no-color      Disable colors
@@ -712,12 +712,12 @@ list_themes() {
 
 list_modules() {
     printf "Available modules:\n"
-    printf "  os       Operating system and kernel\n"
-    printf "  net      Network info (hostname, IPs)\n"
-    printf "  cpu      Processor, cores, load averages\n"
-    printf "  mem      Memory usage\n"
-    printf "  disk     Disk usage and ZFS health\n"
-    printf "  session  Last login and uptime\n"
+    printf "  os       Distro and kernel release\n"
+    printf "  cpu      CPU, topology, clock, load averages\n"
+    printf "  mem      RAM utilization\n"
+    printf "  disk     Disk capacity and ZFS status\n"
+    printf "  net      Host, IPs, resolver, username\n"
+    printf "  session  Last session and running time\n"
 }
 
 parse_args() {
@@ -753,16 +753,16 @@ parse_args() {
 # ── Module Rendering ─────────────────────────────────────
 
 render_os_section() {
-    print_row "OS" "$OS_NAME"
-    print_row "KERNEL" "$KERNEL_VERSION"
+    print_row "DISTRO" "$OS_NAME"
+    print_row "RELEASE" "$KERNEL_VERSION"
 }
 
 render_net_section() {
-    print_row "HOSTNAME" "$NET_HOSTNAME"
-    print_row "MACHINE IP" "$NET_MACHINE_IP"
-    print_row "CLIENT IP" "$NET_CLIENT_IP"
-    print_row "DNS IP" "$NET_DNS_IP"
-    print_row "USER" "$NET_USER"
+    print_row "HOST" "$NET_HOSTNAME"
+    print_row "LOCAL IP" "$NET_MACHINE_IP"
+    print_row "REMOTE IP" "$NET_CLIENT_IP"
+    print_row "RESOLVER" "$NET_DNS_IP"
+    print_row "USERNAME" "$NET_USER"
 }
 
 render_cpu_section() {
@@ -774,44 +774,44 @@ render_cpu_section() {
         load15_pct="$(awk "BEGIN { v=($LOAD_15 / $nproc) * 100; if(v>100) v=100; printf \"%d\", v + 0.5 }")"
     fi
 
-    print_row "PROCESSOR" "$CPU_MODEL"
-    print_row "CORES" "$CPU_CORES"
-    print_row "HYPERVISOR" "$CPU_HYPERVISOR"
-    print_row "CPU FREQ" "$CPU_FREQ"
+    print_row "CPU" "$CPU_MODEL"
+    print_row "TOPOLOGY" "$CPU_CORES"
+    print_row "VIRT" "$CPU_HYPERVISOR"
+    print_row "CLOCK" "$CPU_FREQ"
     if [[ "$LOAD_1" != "N/A" ]]; then
-        print_bar_row "LOAD 1m" "$(draw_bar "$load1_pct" "$BAR_WIDTH")"
-        print_bar_row "LOAD 5m" "$(draw_bar "$load5_pct" "$BAR_WIDTH")"
-        print_bar_row "LOAD 15m" "$(draw_bar "$load15_pct" "$BAR_WIDTH")"
+        print_bar_row "AVG 1m" "$(draw_bar "$load1_pct" "$BAR_WIDTH")"
+        print_bar_row "AVG 5m" "$(draw_bar "$load5_pct" "$BAR_WIDTH")"
+        print_bar_row "AVG 15m" "$(draw_bar "$load15_pct" "$BAR_WIDTH")"
     else
-        print_row "LOAD" "N/A"
+        print_row "AVG" "N/A"
     fi
 }
 
 render_mem_section() {
     if [[ "$MEM_PERCENT" != "N/A" ]]; then
-        print_row "MEMORY" "${MEM_USED_H}/${MEM_TOTAL_H} GiB [${MEM_PERCENT}%]"
-        print_bar_row "USAGE" "$(draw_bar "$MEM_PERCENT_INT" "$BAR_WIDTH")"
+        print_row "RAM" "${MEM_USED_H} / ${MEM_TOTAL_H} GiB (${MEM_PERCENT}%)"
+        print_bar_row "UTILIZATION" "$(draw_bar "$MEM_PERCENT_INT" "$BAR_WIDTH")"
     else
-        print_row "MEMORY" "N/A"
+        print_row "RAM" "N/A"
     fi
 }
 
 render_disk_section() {
     if [[ "$DISK_PERCENT" != "N/A" ]]; then
-        print_row "VOLUME" "${DISK_USED_H}/${DISK_TOTAL_H} GB [${DISK_PERCENT}%]"
-        print_bar_row "DISK USAGE" "$(draw_bar "$DISK_PERCENT_INT" "$BAR_WIDTH")"
+        print_row "DISK" "${DISK_USED_H} / ${DISK_TOTAL_H} GB (${DISK_PERCENT}%)"
+        print_bar_row "CAPACITY" "$(draw_bar "$DISK_PERCENT_INT" "$BAR_WIDTH")"
     else
-        print_row "VOLUME" "N/A"
+        print_row "DISK" "N/A"
     fi
-    print_row "ZFS HEALTH" "$ZFS_HEALTH"
+    print_row "ZFS STATUS" "$ZFS_HEALTH"
 }
 
 render_session_section() {
-    print_row "LAST LOGIN" "$LAST_LOGIN"
+    print_row "LAST SESSION" "$LAST_LOGIN"
     if [[ -n "$LAST_LOGIN_IP" ]]; then
         print_row "" "$LAST_LOGIN_IP"
     fi
-    print_row "UPTIME" "$UPTIME_STR"
+    print_row "RUNNING" "$UPTIME_STR"
 }
 
 # ── JSON Output ──────────────────────────────────────────
@@ -856,9 +856,9 @@ render_json() {
     printf '  },\n'
     printf '  "cpu": {\n'
     printf '    "model": "%s",\n' "$(json_escape "$CPU_MODEL")"
-    printf '    "cores": "%s",\n' "$(json_escape "$CPU_CORES")"
+    printf '    "topology": "%s",\n' "$(json_escape "$CPU_CORES")"
     printf '    "freq": "%s",\n' "$(json_escape "$CPU_FREQ")"
-    printf '    "hypervisor": "%s",\n' "$(json_escape "$CPU_HYPERVISOR")"
+    printf '    "virt": "%s",\n' "$(json_escape "$CPU_HYPERVISOR")"
     printf '    "load_1": "%s",\n' "$(json_escape "$LOAD_1")"
     printf '    "load_5": "%s",\n' "$(json_escape "$LOAD_5")"
     printf '    "load_15": "%s"\n' "$(json_escape "$LOAD_15")"
@@ -872,7 +872,7 @@ render_json() {
     printf '    "used_gb": %s,\n' "${DISK_USED_H:-0}"
     printf '    "total_gb": %s,\n' "${DISK_TOTAL_H:-0}"
     printf '    "percent": %s,\n' "${DISK_PERCENT:-0}"
-    printf '    "zfs_health": "%s"\n' "$(json_escape "$ZFS_HEALTH")"
+    printf '    "zfs_status": "%s"\n' "$(json_escape "$ZFS_HEALTH")"
     printf '  },\n'
     printf '  "session": {\n'
     printf '    "last_login": "%s",\n' "$(json_escape "$LAST_LOGIN")"

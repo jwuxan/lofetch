@@ -12,7 +12,7 @@ lofetch --json | jq '.memory.percent'
 
 ```json
 {
-  "version": "1.1.0",
+  "version": "2.0.0",
   "platform": "macos",
   "timestamp": "2026-02-13T12:00:00Z",
   "os": {
@@ -28,9 +28,9 @@ lofetch --json | jq '.memory.percent'
   },
   "cpu": {
     "model": "Apple M2 Pro",
-    "cores": "12 vCPU(s) / 1 Socket(s)",
+    "topology": "12c / 1s",
     "freq": "N/A",
-    "hypervisor": "Bare Metal",
+    "virt": "Physical",
     "load_1": "2.45",
     "load_5": "3.12",
     "load_15": "2.89"
@@ -44,7 +44,7 @@ lofetch --json | jq '.memory.percent'
     "used_gb": 234.56,
     "total_gb": 994.66,
     "percent": 23.58,
-    "zfs_health": "N/A"
+    "zfs_status": "N/A"
   },
   "session": {
     "last_login": "console Thu Feb 13 08:30",
@@ -68,9 +68,9 @@ lofetch --json | jq '.memory.percent'
 | `network.dns_ip` | string | Primary DNS server |
 | `network.user` | string | Current user |
 | `cpu.model` | string | CPU model name |
-| `cpu.cores` | string | Core count and socket count |
+| `cpu.topology` | string | Core count and socket count |
 | `cpu.freq` | string | CPU frequency or "N/A" |
-| `cpu.hypervisor` | string | Hypervisor name, "Bare Metal", or "N/A" |
+| `cpu.virt` | string | Virtualization type, "Physical", or "N/A" |
 | `cpu.load_1` | string | 1-minute load average |
 | `cpu.load_5` | string | 5-minute load average |
 | `cpu.load_15` | string | 15-minute load average |
@@ -80,7 +80,7 @@ lofetch --json | jq '.memory.percent'
 | `disk.used_gb` | number | Used disk in GB (decimal) |
 | `disk.total_gb` | number | Total disk in GB (decimal) |
 | `disk.percent` | number | Disk usage percentage |
-| `disk.zfs_health` | string | "HEALTH O.K.", "DEGRADED", or "N/A" |
+| `disk.zfs_status` | string | "Healthy", "DEGRADED", or "N/A" |
 | `session.last_login` | string | Last login info |
 | `session.uptime` | string | System uptime |
 

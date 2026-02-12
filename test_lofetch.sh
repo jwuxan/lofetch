@@ -86,11 +86,11 @@ echo "=== Constants ==="
 
 assert_eq "BOX_INNER_WIDTH is 52" "52" "$BOX_INNER_WIDTH"
 assert_eq "LABEL_WIDTH is 13" "13" "$LABEL_WIDTH"
-assert_eq "BAR_WIDTH is 22" "22" "$BAR_WIDTH"
+assert_eq "BAR_WIDTH is 38" "38" "$BAR_WIDTH"
 assert_eq "FILL_CHAR is █" "█" "$FILL_CHAR"
 assert_eq "EMPTY_CHAR is ░" "░" "$EMPTY_CHAR"
-assert_eq "LOFETCH_VERSION is 1.1.0" "1.1.0" "$LOFETCH_VERSION"
-assert_eq "DEFAULT_MODULES" "os,net,cpu,mem,disk,session" "$DEFAULT_MODULES"
+assert_eq "LOFETCH_VERSION is 2.0.0" "2.0.0" "$LOFETCH_VERSION"
+assert_eq "DEFAULT_MODULES" "os,cpu,mem,disk,net,session" "$DEFAULT_MODULES"
 
 # ── Test: draw_bar (plain for width tests) ───────────────
 
@@ -292,7 +292,7 @@ assert_match "--help shows Usage" "Usage:" "$help_out"
 ver_out=$(env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --version 2>&1)
 ver_rc=$?
 assert_exit_code "--version exits 0" "0" "$ver_rc"
-assert_match "--version shows version" "lofetch 1.1.0" "$ver_out"
+assert_match "--version shows version" "lofetch 2.0.0" "$ver_out"
 
 # --list-themes exits 0
 themes_out=$(env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --list-themes 2>&1)
@@ -366,19 +366,19 @@ echo ""
 echo "=== Module Filtering ==="
 
 mod_out=$(env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --no-color --compact --modules os 2>&1)
-assert_match "os module shows OS" "OS" "$mod_out"
-assert_match "os module shows KERNEL" "KERNEL" "$mod_out"
-assert_no_match "os-only hides HOSTNAME" "HOSTNAME" "$mod_out"
-assert_no_match "os-only hides PROCESSOR" "PROCESSOR" "$mod_out"
+assert_match "os module shows DISTRO" "DISTRO" "$mod_out"
+assert_match "os module shows RELEASE" "RELEASE" "$mod_out"
+assert_no_match "os-only hides HOST" "HOST" "$mod_out"
+assert_no_match "os-only hides CPU" "CPU" "$mod_out"
 
 mod_cpu_out=$(env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --no-color --compact --modules cpu 2>&1)
-assert_match "cpu module shows PROCESSOR" "PROCESSOR" "$mod_cpu_out"
-assert_no_match "cpu-only hides HOSTNAME" "HOSTNAME" "$mod_cpu_out"
+assert_match "cpu module shows CPU" "CPU" "$mod_cpu_out"
+assert_no_match "cpu-only hides HOST" "HOST" "$mod_cpu_out"
 
 mod_multi=$(env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --no-color --compact --modules os,mem 2>&1)
-assert_match "os,mem shows OS" "OS" "$mod_multi"
-assert_match "os,mem shows MEMORY" "MEMORY" "$mod_multi"
-assert_no_match "os,mem hides HOSTNAME" "HOSTNAME" "$mod_multi"
+assert_match "os,mem shows DISTRO" "DISTRO" "$mod_multi"
+assert_match "os,mem shows RAM" "RAM" "$mod_multi"
+assert_no_match "os,mem hides HOST" "HOST" "$mod_multi"
 
 # ── Test: Compact Mode ──────────────────────────────────
 
@@ -386,9 +386,9 @@ echo ""
 echo "=== Compact Mode ==="
 
 compact_out=$(env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --no-color --compact 2>&1)
-assert_match "compact shows LOFETCH REPORT" "LOFETCH REPORT" "$compact_out"
-# Should NOT contain MACHINE REPORT (full header only)
-assert_no_match "compact hides MACHINE REPORT" "MACHINE REPORT" "$compact_out"
+assert_match "compact shows LOFETCH" "LOFETCH" "$compact_out"
+# Should NOT contain SYSTEM OVERVIEW (full header only)
+assert_no_match "compact hides SYSTEM OVERVIEW" "SYSTEM OVERVIEW" "$compact_out"
 
 # ── Test: Config File Parsing ────────────────────────────
 
@@ -400,15 +400,15 @@ tmp_config=$(mktemp)
 printf "theme=minimal\nmodules=os,mem\n" > "$tmp_config"
 
 config_out=$(LOFETCH_CONFIG="$tmp_config" env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --no-color --compact 2>&1)
-# Config sets modules to os,mem, so should NOT see HOSTNAME (net module)
-assert_no_match "config modules=os,mem hides HOSTNAME" "HOSTNAME" "$config_out"
-assert_match "config shows OS" "OS" "$config_out"
-assert_match "config shows MEMORY" "MEMORY" "$config_out"
+# Config sets modules to os,mem, so should NOT see HOST (net module)
+assert_no_match "config modules=os,mem hides HOST" "HOST" "$config_out"
+assert_match "config shows DISTRO" "DISTRO" "$config_out"
+assert_match "config shows RAM" "RAM" "$config_out"
 
 # CLI flag overrides config
 override_out=$(LOFETCH_CONFIG="$tmp_config" env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --no-color --compact --modules os,cpu 2>&1)
-assert_match "CLI --modules overrides config" "PROCESSOR" "$override_out"
-assert_no_match "CLI override hides MEMORY" "MEMORY" "$override_out"
+assert_match "CLI --modules overrides config" "CPU" "$override_out"
+assert_no_match "CLI override hides RAM" "RAM" "$override_out"
 
 rm -f "$tmp_config"
 
@@ -427,7 +427,7 @@ if [[ -n "$full_output" ]]; then
     last_line=$(echo "$full_output" | tail -1)
     assert_match "output ends with ┘" "┘$" "$last_line"
 
-    assert_match "output contains MACHINE REPORT" "MACHINE REPORT" "$full_output"
+    assert_match "output contains SYSTEM OVERVIEW" "SYSTEM OVERVIEW" "$full_output"
 
     # Count separators (├...┤) — should have at least 6 section dividers
     sep_count=$(echo "$full_output" | grep -c "^├" || true)

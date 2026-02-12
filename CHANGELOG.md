@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.0.0 (2026-02-13)
+
+### Breaking Changes
+- **All 21 display labels renamed** to differentiate from TR-100:
+  - OS → DISTRO, KERNEL → RELEASE, HOSTNAME → HOST, MACHINE IP → LOCAL IP, CLIENT IP → REMOTE IP, DNS IP → RESOLVER, USER → USERNAME
+  - PROCESSOR → CPU, CORES → TOPOLOGY, HYPERVISOR → VIRT, CPU FREQ → CLOCK, LOAD → AVG
+  - MEMORY → RAM, USAGE → UTILIZATION, VOLUME → DISK, DISK USAGE → CAPACITY, ZFS HEALTH → ZFS STATUS
+  - LAST LOGIN → LAST SESSION, UPTIME → RUNNING
+- **Title renamed**: "MACHINE REPORT" → "SYSTEM OVERVIEW", compact header "LOFETCH REPORT" → "LOFETCH"
+- **Default module order** changed from `os,net,cpu,mem,disk,session` to `os,cpu,mem,disk,net,session`
+- **Data format strings changed**:
+  - Cores: `"12 vCPU(s) / 1 Socket(s)"` → `"12c / 1s"`
+  - Hypervisor: `"Bare Metal"` → `"Physical"`, `"Virtual Machine"` → `"VM"`
+  - ZFS: `"HEALTH O.K."` → `"Healthy"`
+  - Memory/disk: `"X/Y GiB [Z%]"` → `"X / Y GiB (Z%)"`
+- **JSON key renames**: `cpu.cores` → `cpu.topology`, `cpu.hypervisor` → `cpu.virt`, `disk.zfs_health` → `disk.zfs_status`
+
+### Removed
+- Deleted legacy `report.sh` and `test_report.sh` files
+
 ## 1.1.0 (2026-02-13)
 
 ### Changed

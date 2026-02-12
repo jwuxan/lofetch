@@ -16,14 +16,14 @@
 │  ▐██▌   ██▌ ██ ▐██▀▀  ▐██▀▀   ▐██▌  ▐██▌   ██  ██  │
 │  ▐████▌ ▐████▌ ▐██▌   ▐████▌  ▐██▌  ▐████▌ ██  ██  │
 │                                                    │
-│                   MACHINE REPORT                   │
-│           v1.1.0 · 2026-02-13 · macos              │
+│                  SYSTEM OVERVIEW                   │
+│           v2.0.0 · 2026-02-13 · macos              │
 ├────────────────────────────────────────────────────┤
-│ OS           macOS 15.3                            │
-│ KERNEL       Darwin 24.3.0                         │
+│ DISTRO       macOS 15.3                            │
+│ RELEASE      Darwin 24.3.0                         │
 ├────────────────────────────────────────────────────┤
-│ HOSTNAME     workstation.local                     │
-│ MACHINE IP   192.168.1.42                          │
+│ CPU          Apple M2 Pro                          │
+│ TOPOLOGY     12c / 1s                              │
 │ ...                                                │
 └────────────────────────────────────────────────────┘
 ```
@@ -87,12 +87,12 @@ Set with `lofetch --theme <name>` or configure via `~/.config/lofetch/config`.
 
 | Module | Info |
 |--------|------|
-| `os` | Operating system and kernel version |
-| `net` | Hostname, IPs, DNS, user |
-| `cpu` | Processor model, cores, frequency, load averages |
-| `mem` | Memory usage with progress bar |
-| `disk` | Disk usage with progress bar, ZFS health |
-| `session` | Last login and uptime |
+| `os` | Distro and kernel release |
+| `cpu` | CPU model, topology, clock, load averages |
+| `mem` | RAM utilization with progress bar |
+| `disk` | Disk capacity with progress bar, ZFS status |
+| `net` | Host, IPs, resolver, username |
+| `session` | Last session and running time |
 
 Filter with `lofetch --modules os,cpu,mem` or configure via `~/.config/lofetch/config`.
 
@@ -102,7 +102,7 @@ Create `~/.config/lofetch/config`:
 
 ```
 theme=crt
-modules=os,net,cpu,mem,disk,session
+modules=os,cpu,mem,disk,net,session
 ```
 
 ### Environment variables
