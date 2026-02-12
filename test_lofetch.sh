@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# test_zfetch.sh — comprehensive test suite for zfetch
+# test_lofetch.sh — comprehensive test suite for lofetch
 set -uo pipefail
 
 PASS=0
@@ -76,9 +76,9 @@ assert_exit_code() {
 
 # ── Source the script without running main ───────────────
 
-export ZFETCH_SOURCED=1
-source "$SCRIPT_DIR/zfetch"
-set +e  # Disable errexit (zfetch's set -euo pipefail propagates when sourced)
+export LOFETCH_SOURCED=1
+source "$SCRIPT_DIR/lofetch"
+set +e  # Disable errexit (lofetch's set -euo pipefail propagates when sourced)
 
 # ── Test: Constants ──────────────────────────────────────
 
@@ -89,7 +89,7 @@ assert_eq "LABEL_WIDTH is 13" "13" "$LABEL_WIDTH"
 assert_eq "BAR_WIDTH is 22" "22" "$BAR_WIDTH"
 assert_eq "FILL_CHAR is █" "█" "$FILL_CHAR"
 assert_eq "EMPTY_CHAR is ░" "░" "$EMPTY_CHAR"
-assert_eq "ZFETCH_VERSION is 1.0.0" "1.0.0" "$ZFETCH_VERSION"
+assert_eq "LOFETCH_VERSION is 1.1.0" "1.1.0" "$LOFETCH_VERSION"
 assert_eq "DEFAULT_MODULES" "os,net,cpu,mem,disk,session" "$DEFAULT_MODULES"
 
 # ── Test: draw_bar (plain for width tests) ───────────────
@@ -250,21 +250,21 @@ echo "=== Theme System ==="
 
 COLOR_LEVEL=2
 apply_theme "crt"
-assert_eq "CRT theme name" "crt" "$ZFETCH_THEME_NAME"
+assert_eq "CRT theme name" "crt" "$LOFETCH_THEME_NAME"
 assert_not_empty "CRT C_BORDER set" "$C_BORDER"
 assert_not_empty "CRT C_LABEL set" "$C_LABEL"
 assert_not_empty "CRT C_BAR_LOW set" "$C_BAR_LOW"
 
 apply_theme "neon"
-assert_eq "Neon theme name" "neon" "$ZFETCH_THEME_NAME"
+assert_eq "Neon theme name" "neon" "$LOFETCH_THEME_NAME"
 assert_match "Neon border uses purple" "38;5;93" "$C_BORDER"
 
 apply_theme "minimal"
-assert_eq "Minimal theme name" "minimal" "$ZFETCH_THEME_NAME"
+assert_eq "Minimal theme name" "minimal" "$LOFETCH_THEME_NAME"
 assert_match "Minimal border uses gray" "38;5;240" "$C_BORDER"
 
 apply_theme "plain"
-assert_eq "Plain theme name" "plain" "$ZFETCH_THEME_NAME"
+assert_eq "Plain theme name" "plain" "$LOFETCH_THEME_NAME"
 assert_eq "Plain C_BORDER is empty" "" "$C_BORDER"
 assert_eq "Plain C_RESET is empty" "" "$C_RESET"
 
@@ -283,33 +283,33 @@ echo ""
 echo "=== CLI Flags ==="
 
 # --help exits 0
-help_out=$(env -u ZFETCH_SOURCED bash "$SCRIPT_DIR/zfetch" --help 2>&1)
+help_out=$(env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --help 2>&1)
 help_rc=$?
 assert_exit_code "--help exits 0" "0" "$help_rc"
 assert_match "--help shows Usage" "Usage:" "$help_out"
 
 # --version exits 0
-ver_out=$(env -u ZFETCH_SOURCED bash "$SCRIPT_DIR/zfetch" --version 2>&1)
+ver_out=$(env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --version 2>&1)
 ver_rc=$?
 assert_exit_code "--version exits 0" "0" "$ver_rc"
-assert_match "--version shows version" "zfetch 1.0.0" "$ver_out"
+assert_match "--version shows version" "lofetch 1.1.0" "$ver_out"
 
 # --list-themes exits 0
-themes_out=$(env -u ZFETCH_SOURCED bash "$SCRIPT_DIR/zfetch" --list-themes 2>&1)
+themes_out=$(env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --list-themes 2>&1)
 themes_rc=$?
 assert_exit_code "--list-themes exits 0" "0" "$themes_rc"
 assert_match "--list-themes shows crt" "crt" "$themes_out"
 assert_match "--list-themes shows neon" "neon" "$themes_out"
 
 # --list-modules exits 0
-mods_out=$(env -u ZFETCH_SOURCED bash "$SCRIPT_DIR/zfetch" --list-modules 2>&1)
+mods_out=$(env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --list-modules 2>&1)
 mods_rc=$?
 assert_exit_code "--list-modules exits 0" "0" "$mods_rc"
 assert_match "--list-modules shows os" "os" "$mods_out"
 assert_match "--list-modules shows cpu" "cpu" "$mods_out"
 
 # Unknown flag exits non-zero
-unknown_out=$(env -u ZFETCH_SOURCED bash "$SCRIPT_DIR/zfetch" --bogus 2>&1)
+unknown_out=$(env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --bogus 2>&1)
 unknown_rc=$?
 assert_match "Unknown flag reports error" "unknown option" "$unknown_out"
 
@@ -318,7 +318,7 @@ assert_match "Unknown flag reports error" "unknown option" "$unknown_out"
 echo ""
 echo "=== No-Color Output ==="
 
-nocolor_out=$(NO_COLOR=1 env -u ZFETCH_SOURCED bash "$SCRIPT_DIR/zfetch" --compact 2>&1)
+nocolor_out=$(NO_COLOR=1 env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --compact 2>&1)
 # Should contain no ESC (0x1b) bytes
 esc_byte=$'\033'
 if [[ "$nocolor_out" != *"$esc_byte"* ]]; then
@@ -327,7 +327,7 @@ else
     ((FAIL++)); printf "  ✗ NO_COLOR output contains ANSI escapes\n"
 fi
 
-nocolor_flag_out=$(env -u ZFETCH_SOURCED bash "$SCRIPT_DIR/zfetch" --no-color --compact 2>&1)
+nocolor_flag_out=$(env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --no-color --compact 2>&1)
 if [[ "$nocolor_flag_out" != *"$esc_byte"* ]]; then
     ((PASS++)); printf "  ✓ --no-color output has no ANSI escapes\n"
 else
@@ -339,7 +339,7 @@ fi
 echo ""
 echo "=== JSON Output ==="
 
-json_out=$(env -u ZFETCH_SOURCED bash "$SCRIPT_DIR/zfetch" --json 2>&1)
+json_out=$(env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --json 2>&1)
 json_rc=$?
 assert_exit_code "--json exits 0" "0" "$json_rc"
 assert_match "JSON has version field" '"version"' "$json_out"
@@ -365,17 +365,17 @@ fi
 echo ""
 echo "=== Module Filtering ==="
 
-mod_out=$(env -u ZFETCH_SOURCED bash "$SCRIPT_DIR/zfetch" --no-color --compact --modules os 2>&1)
+mod_out=$(env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --no-color --compact --modules os 2>&1)
 assert_match "os module shows OS" "OS" "$mod_out"
 assert_match "os module shows KERNEL" "KERNEL" "$mod_out"
 assert_no_match "os-only hides HOSTNAME" "HOSTNAME" "$mod_out"
 assert_no_match "os-only hides PROCESSOR" "PROCESSOR" "$mod_out"
 
-mod_cpu_out=$(env -u ZFETCH_SOURCED bash "$SCRIPT_DIR/zfetch" --no-color --compact --modules cpu 2>&1)
+mod_cpu_out=$(env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --no-color --compact --modules cpu 2>&1)
 assert_match "cpu module shows PROCESSOR" "PROCESSOR" "$mod_cpu_out"
 assert_no_match "cpu-only hides HOSTNAME" "HOSTNAME" "$mod_cpu_out"
 
-mod_multi=$(env -u ZFETCH_SOURCED bash "$SCRIPT_DIR/zfetch" --no-color --compact --modules os,mem 2>&1)
+mod_multi=$(env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --no-color --compact --modules os,mem 2>&1)
 assert_match "os,mem shows OS" "OS" "$mod_multi"
 assert_match "os,mem shows MEMORY" "MEMORY" "$mod_multi"
 assert_no_match "os,mem hides HOSTNAME" "HOSTNAME" "$mod_multi"
@@ -385,8 +385,8 @@ assert_no_match "os,mem hides HOSTNAME" "HOSTNAME" "$mod_multi"
 echo ""
 echo "=== Compact Mode ==="
 
-compact_out=$(env -u ZFETCH_SOURCED bash "$SCRIPT_DIR/zfetch" --no-color --compact 2>&1)
-assert_match "compact shows ZFETCH REPORT" "ZFETCH REPORT" "$compact_out"
+compact_out=$(env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --no-color --compact 2>&1)
+assert_match "compact shows LOFETCH REPORT" "LOFETCH REPORT" "$compact_out"
 # Should NOT contain MACHINE REPORT (full header only)
 assert_no_match "compact hides MACHINE REPORT" "MACHINE REPORT" "$compact_out"
 
@@ -399,14 +399,14 @@ echo "=== Config File ==="
 tmp_config=$(mktemp)
 printf "theme=minimal\nmodules=os,mem\n" > "$tmp_config"
 
-config_out=$(ZFETCH_CONFIG="$tmp_config" env -u ZFETCH_SOURCED bash "$SCRIPT_DIR/zfetch" --no-color --compact 2>&1)
+config_out=$(LOFETCH_CONFIG="$tmp_config" env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --no-color --compact 2>&1)
 # Config sets modules to os,mem, so should NOT see HOSTNAME (net module)
 assert_no_match "config modules=os,mem hides HOSTNAME" "HOSTNAME" "$config_out"
 assert_match "config shows OS" "OS" "$config_out"
 assert_match "config shows MEMORY" "MEMORY" "$config_out"
 
 # CLI flag overrides config
-override_out=$(ZFETCH_CONFIG="$tmp_config" env -u ZFETCH_SOURCED bash "$SCRIPT_DIR/zfetch" --no-color --compact --modules os,cpu 2>&1)
+override_out=$(LOFETCH_CONFIG="$tmp_config" env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --no-color --compact --modules os,cpu 2>&1)
 assert_match "CLI --modules overrides config" "PROCESSOR" "$override_out"
 assert_no_match "CLI override hides MEMORY" "MEMORY" "$override_out"
 
@@ -418,7 +418,7 @@ echo ""
 echo "=== Full Output Structure ==="
 
 clear_all_colors
-full_output=$(env -u ZFETCH_SOURCED bash "$SCRIPT_DIR/zfetch" --no-color 2>/dev/null || true)
+full_output=$(env -u LOFETCH_SOURCED bash "$SCRIPT_DIR/lofetch" --no-color 2>/dev/null || true)
 
 if [[ -n "$full_output" ]]; then
     first_line=$(echo "$full_output" | head -1)

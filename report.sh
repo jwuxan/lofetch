@@ -4,12 +4,12 @@ LC_NUMERIC=C
 export LC_NUMERIC
 
 # ══════════════════════════════════════════════════════════
-# zfetch — cross-platform system info display
+# lofetch — cross-platform system info display
 # ══════════════════════════════════════════════════════════
 
 # ── Constants ────────────────────────────────────────────
 
-ZFETCH_VERSION="1.0.0"
+LOFETCH_VERSION="1.1.0"
 BOX_INNER_WIDTH=52
 LABEL_WIDTH=13
 BAR_WIDTH=22
@@ -30,7 +30,7 @@ detect_color_support() {
     if [[ "${TERM:-}" == "dumb" ]]; then
         COLOR_LEVEL=0; return
     fi
-    if [[ -n "${ZFETCH_NO_COLOR:-}" ]]; then
+    if [[ -n "${LOFETCH_NO_COLOR:-}" ]]; then
         COLOR_LEVEL=0; return
     fi
     # Check COLORTERM for truecolor
@@ -118,7 +118,7 @@ clear_all_colors() {
 }
 
 AVAILABLE_THEMES="crt neon minimal plain"
-ZFETCH_THEME_NAME="${ZFETCH_THEME:-crt}"
+LOFETCH_THEME_NAME="${LOFETCH_THEME:-crt}"
 
 apply_theme() {
     local name="${1:-crt}"
@@ -129,7 +129,7 @@ apply_theme() {
         plain)   apply_theme_plain ;;
         *)       apply_theme_crt ;;
     esac
-    ZFETCH_THEME_NAME="$name"
+    LOFETCH_THEME_NAME="$name"
     # If color is disabled, override everything
     if [[ "${COLOR_LEVEL:-0}" -eq 0 ]]; then
         clear_all_colors
@@ -612,10 +612,10 @@ get_uptime_info() {
 
 print_ascii_logo() {
     local logo_lines=(
-        "▐███▀▀▀ ▐███▀▀▀ ▐███▀▀▀ ███████ ▐███▀▀▀ ██▌  ██▌"
-        "  ▄██▀  ▐██▄▄   ▐██▄▄     ██▌   ▐██▌    ████████▌"
-        "▄██▀    ▐██▀▀   ▐██▀▀     ██▌   ▐██▌    ██▌▀▀██▌ "
-        "███████ ▐██▌    ▐███▄▄▄   ██▌   ▐███▄▄▄ ██▌  ██▌ "
+        "▐██▌   ▐████▌ ▐████▌ ▐████▌ ██████ ▐████▌ ██  ██"
+        "▐██▌   ██▌ ██ ▐██▄▄  ▐██▄▄   ▐██▌  ▐██▌   ██████"
+        "▐██▌   ██▌ ██ ▐██▀▀  ▐██▀▀   ▐██▌  ▐██▌   ██  ██"
+        "▐████▌ ▐████▌ ▐██▌   ▐████▌  ▐██▌  ▐████▌ ██  ██"
     )
     local line
     for line in "${logo_lines[@]}"; do
@@ -633,7 +633,7 @@ print_ascii_logo() {
 
 print_header() {
     if [[ "$COMPACT_MODE" -eq 1 ]]; then
-        print_centered "ZFETCH REPORT" "$C_HEADER"
+        print_centered "LOFETCH REPORT" "$C_HEADER"
     else
         print_empty_row
         print_ascii_logo
@@ -643,7 +643,7 @@ print_header() {
         platform="$(detect_platform)"
         local ts
         ts="$(date -u '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || date '+%Y-%m-%d %H:%M' 2>/dev/null || echo '')"
-        local info_line="v${ZFETCH_VERSION}"
+        local info_line="v${LOFETCH_VERSION}"
         if [[ -n "$ts" ]]; then info_line+=" · $ts"; fi
         info_line+=" · $platform"
         print_centered "$info_line" "$C_DIM"
@@ -654,10 +654,10 @@ print_header() {
 
 load_config() {
     local config_file=""
-    if [[ -n "${ZFETCH_CONFIG:-}" && -f "${ZFETCH_CONFIG}" ]]; then
-        config_file="$ZFETCH_CONFIG"
-    elif [[ -f "${HOME}/.config/zfetch/config" ]]; then
-        config_file="${HOME}/.config/zfetch/config"
+    if [[ -n "${LOFETCH_CONFIG:-}" && -f "${LOFETCH_CONFIG}" ]]; then
+        config_file="$LOFETCH_CONFIG"
+    elif [[ -f "${HOME}/.config/lofetch/config" ]]; then
+        config_file="${HOME}/.config/lofetch/config"
     fi
     [[ -z "$config_file" ]] && return 0
 
@@ -668,7 +668,7 @@ load_config() {
         key="$(echo "$key" | tr -d '[:space:]')"
         value="$(echo "$value" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
         case "$key" in
-            theme)   [[ -z "${_CLI_THEME:-}" ]] && ZFETCH_THEME_NAME="$value" ;;
+            theme)   [[ -z "${_CLI_THEME:-}" ]] && LOFETCH_THEME_NAME="$value" ;;
             modules) [[ -z "${_CLI_MODULES:-}" ]] && ENABLED_MODULES="$value" ;;
         esac
     done < "$config_file" || true
@@ -680,7 +680,7 @@ ENABLED_MODULES="$DEFAULT_MODULES"
 
 show_help() {
     cat <<'HELPEOF'
-Usage: zfetch [OPTIONS]
+Usage: lofetch [OPTIONS]
 
 A retro CRT-style system information display.
 
@@ -698,7 +698,7 @@ HELPEOF
 }
 
 show_version() {
-    printf "zfetch %s\n" "$ZFETCH_VERSION"
+    printf "lofetch %s\n" "$LOFETCH_VERSION"
 }
 
 list_themes() {
@@ -728,7 +728,7 @@ parse_args() {
             -v|--version)
                 show_version; exit 0 ;;
             -t|--theme)
-                shift; ZFETCH_THEME_NAME="${1:-crt}"; _CLI_THEME=1 ;;
+                shift; LOFETCH_THEME_NAME="${1:-crt}"; _CLI_THEME=1 ;;
             -m|--modules)
                 shift; ENABLED_MODULES="${1:-$DEFAULT_MODULES}"; _CLI_MODULES=1 ;;
             -j|--json)
@@ -736,14 +736,14 @@ parse_args() {
             -c|--compact)
                 COMPACT_MODE=1 ;;
             --no-color)
-                ZFETCH_NO_COLOR=1 ;;
+                LOFETCH_NO_COLOR=1 ;;
             --list-themes)
                 list_themes; exit 0 ;;
             --list-modules)
                 list_modules; exit 0 ;;
             *)
-                printf "zfetch: unknown option '%s'\n" "$1" >&2
-                printf "Try 'zfetch --help' for more information.\n" >&2
+                printf "lofetch: unknown option '%s'\n" "$1" >&2
+                printf "Try 'lofetch --help' for more information.\n" >&2
                 exit 1 ;;
         esac
         shift
@@ -840,7 +840,7 @@ render_json() {
     ts="$(date -u '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || echo '')"
 
     printf '{\n'
-    printf '  "version": "%s",\n' "$ZFETCH_VERSION"
+    printf '  "version": "%s",\n' "$LOFETCH_VERSION"
     printf '  "platform": "%s",\n' "$(json_escape "$platform")"
     printf '  "timestamp": "%s",\n' "$(json_escape "$ts")"
     printf '  "os": {\n'
@@ -921,11 +921,11 @@ render_report() {
 
 # ── Entry Point ──────────────────────────────────────────
 
-if [[ -z "${ZFETCH_SOURCED:-}" ]]; then
+if [[ -z "${LOFETCH_SOURCED:-}" ]]; then
     parse_args "$@"
     load_config
     detect_color_support
-    apply_theme "$ZFETCH_THEME_NAME"
+    apply_theme "$LOFETCH_THEME_NAME"
 
     if [[ "$JSON_MODE" -eq 1 ]]; then
         render_json

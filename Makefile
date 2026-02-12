@@ -3,13 +3,13 @@ PREFIX ?= /usr/local
 .PHONY: install uninstall test lint
 
 install:
-	install -m 755 zfetch $(PREFIX)/bin/zfetch
+	install -m 755 lofetch $(PREFIX)/bin/lofetch
 
 uninstall:
-	rm -f $(PREFIX)/bin/zfetch
+	rm -f $(PREFIX)/bin/lofetch
 
 test:
-	bash test_zfetch.sh
+	bash test_lofetch.sh
 
 lint:
-	shellcheck zfetch
+	shellcheck lofetch

@@ -54,8 +54,8 @@ assert_numeric() {
 
 # ── Source the script without running main ───────────────
 
-# We set ZFETCH_SOURCED=1 so report.sh exports functions but doesn't run main
-export ZFETCH_SOURCED=1
+# We set LOFETCH_SOURCED=1 so report.sh exports functions but doesn't run main
+export LOFETCH_SOURCED=1
 source "$SCRIPT_DIR/report.sh"
 
 # ── Test: Constants ──────────────────────────────────────
@@ -197,8 +197,8 @@ assert_not_empty "UPTIME_STR is set" "${UPTIME_STR:-}"
 echo ""
 echo "=== Full Output Structure ==="
 
-# Run the full render (unset ZFETCH_SOURCED temporarily)
-full_output=$(ZFETCH_SOURCED="" render_report 2>/dev/null || true)
+# Run the full render (unset LOFETCH_SOURCED temporarily)
+full_output=$(LOFETCH_SOURCED="" render_report 2>/dev/null || true)
 
 if [[ -n "$full_output" ]]; then
     # First line should be top border
@@ -210,7 +210,7 @@ if [[ -n "$full_output" ]]; then
     assert_match "output ends with ┘" "┘$" "$last_line"
 
     # Should contain merged compact header
-    assert_match "output contains ZFETCH REPORT" "ZFETCH REPORT" "$full_output"
+    assert_match "output contains LOFETCH REPORT" "LOFETCH REPORT" "$full_output"
 
     # Count separators (├...┤) — should have at least 5 section dividers
     sep_count=$(echo "$full_output" | grep -c "^├" || true)
@@ -258,12 +258,12 @@ if [[ -n "$full_output" ]]; then
         ((FAIL++)); printf "  ✗ found %d empty padding rows, expected 0\n" "$empty_row_count"
     fi
 
-    # Header is single line "ZFETCH REPORT" (not split across two lines)
-    header_count=$(echo "$full_output" | grep -c "ZFETCH" || true)
+    # Header is single line "LOFETCH REPORT" (not split across two lines)
+    header_count=$(echo "$full_output" | grep -c "LOFETCH" || true)
     if [[ "$header_count" -eq 1 ]]; then
         ((PASS++)); printf "  ✓ header is single merged line\n"
     else
-        ((FAIL++)); printf "  ✗ expected 1 header line with ZFETCH, got %d\n" "$header_count"
+        ((FAIL++)); printf "  ✗ expected 1 header line with LOFETCH, got %d\n" "$header_count"
     fi
 
     # Verify line width: all lines should be BOX_INNER_WIDTH + 2 = 42 display columns
