@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tests
+        run: bash test_zfetch.sh
+      - name: Lint with ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: .
+          additional_files: zfetch
