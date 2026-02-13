@@ -10,19 +10,21 @@ lofetch is a cross-platform system information display tool (neofetch-like) — 
 
 ```bash
 ./lofetch                           # Run the tool
-bash test_lofetch.sh                # Run full test suite (110 assertions)
-shellcheck lofetch                  # Lint
-make test                           # Alias for test suite
-make lint                           # Alias for shellcheck
+make test                           # Run main test suite (test_lofetch.sh)
+make test-package                   # Run package structure tests
+make test-ci                        # Run CI workflow validation tests
+make test-all                       # Run all three test suites
+make lint                           # Run shellcheck linter
+shellcheck lofetch                  # Lint directly
 ```
 
-There is no build step or install step required for development. The primary script is `lofetch`. The legacy `report.sh` and `test_report.sh` are older copies kept for backward compatibility.
+There is no build step or install step required for development. The primary script is `lofetch`.
 
-The test suite has no per-test granularity — it runs all assertions in one pass. The exit code equals the failure count (0 = all pass). CI runs on both `ubuntu-latest` and `macos-latest`.
+The main test suite (`test_lofetch.sh`) has no per-test granularity — it runs all assertions in one pass. The exit code equals the failure count (0 = all pass). CI runs on both `ubuntu-latest` and `macos-latest`, plus bash 4.4/5.0/5.2 compatibility containers.
 
 ## Architecture
 
-`lofetch` is a single ~936-line bash script organized in sequential sections. The execution flow is:
+`lofetch` is a single ~935-line bash script organized in sequential sections. The execution flow is:
 
 **Entry point**: `parse_args` → `load_config` → `detect_color_support` → `apply_theme` → `render_report` (or `render_json`). Setting `LOFETCH_SOURCED=1` prevents execution, exporting all functions for testing.
 
@@ -33,6 +35,8 @@ The test suite has no per-test granularity — it runs all assertions in one pas
 - **Data collection**: `get_os_info`, `get_network_info`, `get_cpu_info`, `get_load_info`, `get_memory_info`, `get_disk_info`, `get_session_info` — each sets global variables and uses `case "$platform"` branching.
 - **Module system**: `render_report()` iterates `ENABLED_MODULES` (comma-separated), calling `render_<name>_section()` functions. Separators between each module.
 - **Config priority**: CLI flags (`_CLI_THEME`/`_CLI_MODULES` guard vars) > `LOFETCH_THEME` env var > config file (`~/.config/lofetch/config`) > defaults.
+
+**Layout constants** (line 12–18): `BOX_INNER_WIDTH=52`, `LABEL_WIDTH=13`, `BAR_WIDTH=37`. The bar gets 1 space of right padding before the border (`val_width = 52 - 13 - 1 = 38`, leaving 1 column spare).
 
 ## Critical Implementation Details
 
